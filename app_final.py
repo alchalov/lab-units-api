@@ -1,12 +1,41 @@
 """LabUnits API — перевод результатов лабораторных анализов между единицами измерения."""
 
+import logging
+import os
+from contextlib import asynccontextmanager
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query
 
-APP_NAME = "LabUnits API"
-APP_VERSION = "0.1.0"
-DEFAULT_PRECISION = 2
+# --- Настройки из переменных окружения (значения по умолчанию — после запятой) ---
+APP_NAME = os.getenv("APP_NAME", "LabUnits API")
+APP_VERSION = os.getenv("APP_VERSION", "0.1.0")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+
+
+def read_precision() -> int:
+    """Читает DEFAULT_PRECISION; при ошибке берёт 2, чтобы сервис не падал."""
+    raw = os.getenv("DEFAULT_PRECISION", "2")
+    try:
+        precision = int(raw)
+    except ValueError:
+        precision = -1
+    if not 0 <= precision <= 6:
+        logging.getLogger("labunits").warning(
+            "Некорректное DEFAULT_PRECISION=%r, используется 2", raw
+        )
+        return 2
+    return precision
+
+
+# --- Журнал событий ---
+logging.basicConfig(
+    level=LOG_LEVEL,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+)
+logger = logging.getLogger("labunits")
+
+DEFAULT_PRECISION = read_precision()
 
 # Справочник показателей.
 # factor — коэффициент пересчёта: значение в традиционных единицах = значение в СИ * factor.
@@ -69,7 +98,19 @@ ANALYTES = {
     },
 }
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info(
+        "Сервис запущен: %s %s, показателей: %d, знаков после запятой: %d",
+        APP_NAME, APP_VERSION, len(ANALYTES), DEFAULT_PRECISION,
+    )
+    yield
+    logger.info("Сервис остановлен")
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title=APP_NAME,
     version=APP_VERSION,
     description="Сервис перевода результатов лабораторных анализов "
@@ -81,6 +122,7 @@ def find_analyte(code: str) -> dict:
     """Ищет показатель по коду без учёта регистра или возвращает 404."""
     analyte = ANALYTES.get(code.lower())
     if analyte is None:
+        logger.warning("Запрошен неизвестный показатель: %s", code)
         raise HTTPException(
             status_code=404,
             detail=f"Показатель '{code}' не найден. Список кодов: /analytes",
@@ -142,10 +184,14 @@ def convert(
         result = value / factor
         from_unit, to_unit = analyte["conventional_unit"], analyte["si_unit"]
 
+    rounded = round(result, DEFAULT_PRECISION)
+    logger.info(
+        "Пересчёт %s: %s %s -> %s %s", code.lower(), value, from_unit, rounded, to_unit
+    )
     return {
         "code": code.lower(),
         "name": analyte["name"],
         "input": {"value": value, "unit": from_unit},
-        "result": {"value": round(result, DEFAULT_PRECISION), "unit": to_unit},
+        "result": {"value": rounded, "unit": to_unit},
         "factor": factor,
     }
