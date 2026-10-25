@@ -1,0 +1,15 @@
+# Виртуальное окружение
+.venv/
+
+# Секреты и локальные настройки
+.env
+
+# Кэш Python и pytest
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Логи и служебные файлы IDE/ОС
+*.log
+.vscode/
+.idea/
