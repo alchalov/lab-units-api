@@ -1,9 +1,12 @@
 """LabUnits API — перевод результатов лабораторных анализов между единицами измерения."""
 
-from fastapi import FastAPI, HTTPException
+from typing import Literal
+
+from fastapi import FastAPI, HTTPException, Query
 
 APP_NAME = "LabUnits API"
 APP_VERSION = "0.1.0"
+DEFAULT_PRECISION = 2
 
 # Справочник показателей.
 # factor — коэффициент пересчёта: значение в традиционных единицах = значение в СИ * factor.
@@ -117,3 +120,32 @@ def list_analytes():
 def get_analyte(code: str):
     """Карточка одного показателя по его коду, например /analytes/glucose."""
     return {"code": code.lower(), **find_analyte(code)}
+
+
+@app.get("/convert/{code}")
+def convert(
+    code: str,
+    value: float = Query(..., ge=0, description="Результат анализа, не меньше 0"),
+    to: Literal["conventional", "si"] = Query(
+        "conventional",
+        description="Куда переводить: conventional — в традиционные единицы, si — в СИ",
+    ),
+):
+    """Переводит результат анализа между единицами СИ и традиционными единицами."""
+    analyte = find_analyte(code)
+    factor = analyte["factor"]
+
+    if to == "conventional":
+        result = value * factor
+        from_unit, to_unit = analyte["si_unit"], analyte["conventional_unit"]
+    else:
+        result = value / factor
+        from_unit, to_unit = analyte["conventional_unit"], analyte["si_unit"]
+
+    return {
+        "code": code.lower(),
+        "name": analyte["name"],
+        "input": {"value": value, "unit": from_unit},
+        "result": {"value": round(result, DEFAULT_PRECISION), "unit": to_unit},
+        "factor": factor,
+    }
