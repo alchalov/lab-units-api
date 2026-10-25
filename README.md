@@ -1,6 +1,6 @@
 # 🧪 LabUnits API
 
-![FastAPI CI](https://github.com/alchalov/lab-units-api/actions/workflows/ci.yml/badge.svg)](https://github.com/alchalov/lab-units-api/actions/workflows/ci.yml)
+![FastAPI CI](https://github.com/alchalov/lab-units-api/actions/workflows/ci.yml/badge.svg)(https://github.com/alchalov/lab-units-api/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.162-009688?logo=fastapi&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-20%20passed-brightgreen?logo=pytest&logoColor=white)
