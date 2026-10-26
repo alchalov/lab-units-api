@@ -48,7 +48,7 @@
 | `iron` | Железо сывороточное | umol/L | ug/dL | 5.587 |
 | `hemoglobin` | Гемоглобин | g/L | g/dL | 0.1 |
 
-Источник коэффициентов: [Labcorp — SI Unit Conversion Table](https://www.labcorp.com/resource/si-unit-conversion-table).
+Источник коэффициентов: [Labcorp - SI Unit Conversion Table](https://www.labcorp.com/resource/si-unit-conversion-table).
 Для мочевой кислоты коэффициент пересчитан на мкмоль/л (16.9 / 1000),
 для гемоглобина следует из определения (1 г/л = 0,1 г/дл).
 
